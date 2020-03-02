@@ -35,7 +35,7 @@ class MusicThread(Thread):
         except AttributeError:
             self.conn.send('Invalid command\n'.encode('ascii'))
 
-    def cmd_play(self, argv):
+    def cmd_note(self, argv):
         self.midisender.send_note(argv[0], int(argv[1]), float(argv[2]))
 
     def stop(self):
