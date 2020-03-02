@@ -3,6 +3,7 @@ from threading import Thread
 from common.midi import MidiSender
 import logging
 
+
 class MusicThread(Thread):
     def __init__(self, midisender, conn, host, port):
         Thread.__init__(self)
@@ -24,8 +25,18 @@ class MusicThread(Thread):
                 self.logger.debug('recv line: ' + line)
                 buffer = buffer[buffer.find(b'\n') + 1:]
                 columns = line.split(' ')
-                self.midisender.send_note(columns[0], int(columns[1]), float(columns[2]))
+                self.parse_command(columns[0], columns[1:])
         self.stop()
+
+    def parse_command(self, command, argv):
+        try:
+            command_method = getattr(self, 'cmd_' + command.lower())
+            command_method(argv)
+        except AttributeError:
+            self.conn.send('Invalid command\n'.encode('ascii'))
+
+    def cmd_play(self, argv):
+        self.midisender.send_note(argv[0], int(argv[1]), float(argv[2]))
 
     def stop(self):
         self.conn.shutdown(socket.SHUT_RDWR)

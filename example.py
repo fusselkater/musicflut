@@ -31,6 +31,6 @@ s.connect(('localhost', 1234))
 for step in music:
     time.sleep(0.01)
     for note in step:
-        data = ' '.join(note) + '\n'
+        data = 'PLAY ' + ' '.join(note) + '\n'
         s.send(data.encode('ascii'))
     time.sleep(float(step[0][2]))
