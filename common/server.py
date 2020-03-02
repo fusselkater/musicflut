@@ -36,18 +36,24 @@ class MusicThread(Thread):
             self.conn.send('Invalid command\n'.encode('ascii'))
 
     def cmd_note(self, argv):
-        self.midisender.send_note(argv[0], int(argv[1]), float(argv[2]))
+        note_param = {
+            'note': argv[0],
+            'octave': int(argv[1]),
+            'duration': float(argv[2]),
+            'velocity': 127 if len(argv) <= 3 else int(argv[3]),
+        }
+        self.midisender.send_note(**note_param)
 
     def stop(self):
         self.conn.shutdown(socket.SHUT_RDWR)
 
 
 class MusicServer:
-    def __init__(self, family=socket.AF_INET, host='127.0.0.1', port='1234'):
+    def __init__(self, family=socket.AF_INET, host='127.0.0.1', port='1234', midi_port=0):
         self.logger = logging.getLogger('MusicServer({0}:{1})'.format(host, port))
         self.socket = socket.socket(family, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.midisender = MidiSender()
+        self.midisender = MidiSender(port=midi_port)
         self.socket.bind((host, port))
         self.threads = []
 
@@ -71,3 +77,4 @@ class MusicServer:
     def stop(self):
         self.logger.info('Stopping server...')
         self.socket.shutdown(socket.SHUT_RDWR)
+

@@ -11,6 +11,6 @@ def signal_handler(signum, frame):
 
 logging.basicConfig(level=logging.DEBUG)
 logging.info('Starting musicflut server...')
-server = MusicServer(host='0.0.0.0', port=1234)
+server = MusicServer(host='0.0.0.0', port=1234, midi_port=0)
 signal.signal(signal.SIGINT, signal_handler)
 server.serve()

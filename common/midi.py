@@ -45,12 +45,12 @@ class MidiSender:
         self.logger.debug('OFF {0}'.format(midi_num))
         self.midiout.send_message([NOTE_OFF, midi_num, 0])
 
-    def send_note(self, note, octave, duration):
+    def send_note(self, note, octave, duration, velocity):
         try:
             midi_num = midi_note_mapping[note][octave]
             self.logger.info('Playing {0}{1} for {2} secs...'.format(note, octave, duration))
             self.logger.debug('ON {0}'.format(midi_num))
-            self.midiout.send_message([NOTE_ON, midi_num, 112])
+            self.midiout.send_message([NOTE_ON, midi_num, velocity])
             t = threading.Thread(target=self._note_off, args=(midi_num, duration))
             t.start()
         except KeyError:
