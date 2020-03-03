@@ -36,13 +36,16 @@ class MusicThread(Thread):
             self.conn.send('Invalid command\n'.encode('ascii'))
 
     def cmd_note(self, argv):
-        note_param = {
-            'note': argv[0],
-            'octave': int(argv[1]),
-            'duration': float(argv[2]),
-            'velocity': 127 if len(argv) <= 3 else int(argv[3]),
-        }
-        self.midisender.send_note(**note_param)
+        try:
+            note_param = {
+                'note': argv[0],
+                'octave': int(argv[1]),
+                'duration': float(argv[2]),
+                'velocity': 127 if len(argv) <= 3 else int(argv[3]),
+            }
+            self.midisender.send_note(**note_param)
+        except ValueError:
+            self.conn.send('Invalid value\n'.encode('ascii'))
 
     def stop(self):
         self.conn.shutdown(socket.SHUT_RDWR)
