@@ -1,5 +1,5 @@
 import time
-import threading
+from threading import Timer
 import logging
 import rtmidi
 from rtmidi.midiconstants import NOTE_OFF, NOTE_ON
@@ -25,33 +25,45 @@ NOTES = [
 ]
 OCTAVES = range(-2, 9)
 
-midi_note_mapping = {}
-for note in NOTES:
-    for octave in OCTAVES:
-        if note[0] not in midi_note_mapping:
-            midi_note_mapping[note[0]] = {}
-        midi_mapping = (octave + 2) * 12 + note[1]
-        midi_note_mapping[note[0]][octave] = midi_mapping
+
+class MidiNote:
+    def __init__(self, midiout, note):
+        self.logger = logging.getLogger('MidiNote({0})'.format(note))
+        self._midiout = midiout
+        self._note = note
+        self._timer = None
+
+    def _on(self, velocity):
+        self.logger.debug('ON')
+        self._midiout.send_message([NOTE_ON, self._note, velocity])
+
+    def _off(self):
+        self.logger.debug('OFF')
+        self._midiout.send_message([NOTE_OFF, self._note, 0])
+
+    def play(self, duration, velocity):
+        if self._timer and self._timer.isAlive():
+            self._timer.cancel()
+        else:
+            self._on(velocity)
+        self._timer = Timer(duration, self._off)
+        self._timer.start()
 
 
 class MidiSender:
     def __init__(self, port=0):
         self.logger = logging.getLogger('MidiSender({0})'.format(port))
-        self.midiout = rtmidi.MidiOut()
-        self.midiout.open_port(port)
-
-    def _note_off(self, midi_num, duration):
-        time.sleep(duration)
-        self.logger.debug('OFF {0}'.format(midi_num))
-        self.midiout.send_message([NOTE_OFF, midi_num, 0])
+        self._midiout = rtmidi.MidiOut()
+        self._midiout.open_port(port)
+        self._notes = {}
+        for octave in OCTAVES:
+            self._notes[octave] = {}
+            for note in NOTES:
+                midi_mapping = (octave + 2) * 12 + note[1]
+                self._notes[octave][note[0]] = MidiNote(self._midiout, midi_mapping)
 
     def send_note(self, note, octave, duration, velocity):
         try:
-            midi_num = midi_note_mapping[note][octave]
-            self.logger.info('Playing {0}{1} for {2} secs...'.format(note, octave, duration))
-            self.logger.debug('ON {0}'.format(midi_num))
-            self.midiout.send_message([NOTE_ON, midi_num, velocity])
-            t = threading.Thread(target=self._note_off, args=(midi_num, duration))
-            t.start()
+            self._notes[octave][note].play(duration, velocity)
         except KeyError:
             self.logger.info('Note {0}{1} not existend. Ignoring.'.format(note, octave))
