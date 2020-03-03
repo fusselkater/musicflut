@@ -40,13 +40,13 @@ class MusicThread(Thread):
             octave = int(argv[1])
             duration = float(argv[2])
             note_param = {
-                'note': argv[0],
+                'note': argv[0].upper(),
                 'octave': octave if -2 <= octave <= 8 else 0,
                 'duration': duration if duration <= 5.0 else 5.0,
                 'velocity': 127 if len(argv) <= 3 else int(argv[3]),
             }
             self.midisender.send_note(**note_param)
-        except ValueError:
+        except (ValueError, IndexError):
             self.conn.send('Invalid value\n'.encode('ascii'))
 
     def stop(self):
