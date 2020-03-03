@@ -64,6 +64,7 @@ class MidiSender:
 
     def send_note(self, note, octave, duration, velocity):
         try:
+            self.logger.info('Note {0}{1} for {2} secs (velocity {3})'.format(note, octave, duration, velocity))
             self._notes[octave][note].play(duration, velocity)
         except KeyError:
             self.logger.info('Note {0}{1} not existend. Ignoring.'.format(note, octave))
